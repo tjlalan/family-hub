@@ -1832,16 +1832,22 @@ if (!session && !bypassAuth) {
   </div>
 </div>
 
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
-                    {weekDataWithEvents.map((day) => (
-                      <DayColumn
-                        key={day.id}
-                        day={day}
-                        lunchStatus={lunchStatusByDayId[day.id] ?? "unset"}
-                        onClick={() => setSelectedDayId(day.id)}
-                      />
-                    ))}
-                  </div>
+                  {isWeekSectionOpen ? (
+  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
+    {weekDataWithEvents.map((day) => (
+      <DayColumn
+        key={day.id}
+        day={day}
+        lunchStatus={lunchStatusByDayId[day.id] ?? "unset"}
+        onClick={() => setSelectedDayId(day.id)}
+      />
+    ))}
+  </div>
+) : (
+  <div className="rounded-2xl bg-slate-50 px-4 py-6 text-sm text-slate-500 ring-1 ring-slate-100">
+    Week view is hidden on mobile to keep the dashboard focused on lists.
+  </div>
+)}
                 </Card>
               </section>
             </div>

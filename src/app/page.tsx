@@ -286,7 +286,7 @@ function SectionLabel({ label, color }: { label: string; color: string }) {
 
 function Card({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="h-full flex flex-col rounded-[28px] bg-white/80 p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/90 backdrop-blur-xl">
+    <div className="h-full flex flex-col rounded-[28px] bg-white/80 p-3 sm:p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/90 backdrop-blur-xl">
       {title ? <h2 className="mb-4 text-xl font-semibold tracking-[-0.03em] text-slate-950">{title}</h2> : null}
       {children}
     </div>
@@ -358,7 +358,7 @@ function DayColumn({
     <button
       onClick={onClick}
       className={[
-        "flex h-full min-h-[380px] flex-col rounded-[24px] p-3 text-left transition",
+        "flex h-full min-h-[220px] sm:min-h-[280px] lg:min-h-[380px] flex-col rounded-[24px] p-3 text-left transition",
         day.isToday
           ? "border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-white shadow-[0_16px_32px_rgba(59,130,246,0.14)]"
           : "border border-white/90 bg-white/70 shadow-sm hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white",
@@ -829,7 +829,7 @@ function DayDetailDrawer({
 
   return (
     <div className="pointer-events-none fixed inset-0 z-50 flex items-stretch justify-end bg-black/20 p-4">
-      <div className="pointer-events-auto flex h-full w-full max-w-md flex-col rounded-3xl bg-white p-5 shadow-2xl">
+      <div className="pointer-events-auto flex h-full w-full max-w-none sm:max-w-md flex-col rounded-3xl bg-white p-4 sm:p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-xl font-semibold text-neutral-900">{day.name}, {day.date}</div>
@@ -898,7 +898,7 @@ function MonthLunchDrawer({
 
   return (
     <div className="pointer-events-none fixed inset-0 z-50 flex items-stretch justify-end bg-black/20 p-4">
-      <div className="pointer-events-auto flex h-full w-full max-w-md flex-col rounded-3xl bg-white p-5 shadow-2xl">
+      <div className="pointer-events-auto flex h-full w-full max-w-none sm:max-w-md flex-col rounded-3xl bg-white p-4 sm:p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-xl font-semibold text-neutral-900">{day.dateLabel}</div>
@@ -1157,10 +1157,6 @@ async function loadListItemsFromSupabase() {
   setHasLoadedLists(true);
 }
 
-() => {
-  void loadListItemsFromSupabase();
-}
-
 useEffect(() => {
   const lunchChannel = supabase
     .channel("realtime-lunch-plans")
@@ -1243,32 +1239,6 @@ useEffect(() => {
     if (!hasLoadedWeekData) return;
     localStorage.setItem("weekStartDate", weekStartDate.toISOString());
   }, [weekStartDate, hasLoadedWeekData]);
-
-
-  useEffect(() => {
-    if (!hasLoadedMonthLunchData) return;
-    localStorage.setItem("monthLunchData", JSON.stringify(monthLunchData));
-  }, [monthLunchData, hasLoadedMonthLunchData]);
-
-  useEffect(() => {
-    if (!hasLoadedLists) return;
-    localStorage.setItem("groceries", JSON.stringify(groceries));
-  }, [groceries, hasLoadedLists]);
-
-  useEffect(() => {
-    if (!hasLoadedLists) return;
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks, hasLoadedLists]);
-
-  useEffect(() => {
-    if (!hasLoadedLists) return;
-    localStorage.setItem("projects", JSON.stringify(projects));
-  }, [projects, hasLoadedLists]);
-
-  useEffect(() => {
-    if (!hasLoadedLists) return;
-    localStorage.setItem("gifts", JSON.stringify(gifts));
-  }, [gifts, hasLoadedLists]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -1722,10 +1692,10 @@ if (!session && !bypassAuth) {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef2ff_0%,_#f8fafc_34%,_#f5f5f5_100%)] text-neutral-900">
       <div className="mx-auto flex min-h-screen max-w-[1280px] flex-col p-4">
         <header className="rounded-[28px] bg-white/80 px-5 py-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/90 backdrop-blur-xl">
-          <div className="grid grid-cols-12 items-center gap-4">
-            <div className="col-span-8">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:items-center">
+            <div className="col-span-1 md:col-span-8">
               <SectionLabel label="Family Hub" color="text-violet-500" />
-              <div className="text-[2.2rem] font-semibold leading-none tracking-[-0.04em] text-slate-950">
+              <div className="text-[1.9rem] sm:text-[2.2rem] font-semibold leading-none tracking-[-0.04em] text-slate-950">
                 {currentTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
               </div>
               <div className="mt-1 text-sm font-medium text-slate-500">
@@ -1737,7 +1707,7 @@ if (!session && !bypassAuth) {
               </div>
             </div>
 
-            <div className="col-span-4 flex items-center justify-end gap-3 text-sm">
+            <div className="col-span-1 flex flex-wrap items-center gap-3 text-sm md:col-span-4 md:justify-end">
               <div className="rounded-2xl bg-white px-3 py-2 text-neutral-700 shadow-sm ring-1 ring-black/5">72° Sunny</div>
               <div className="rounded-2xl bg-emerald-50 px-3 py-2 text-emerald-700 shadow-sm ring-1 ring-emerald-100">Sync ✓</div>
               <button
@@ -1764,8 +1734,8 @@ if (!session && !bypassAuth) {
 
         {appView === "dashboard" ? (
           <main className="mt-4 flex flex-1 flex-col gap-4">
-            <div className="grid grid-cols-12 gap-4">
-              <section className="col-span-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+              <section className="col-span-1 md:col-span-3">
                 <Card title="TODAY ✦">
                   <SectionLabel label="Focus" color="text-amber-500" />
                   <div className="flex flex-col gap-4">
@@ -1797,7 +1767,7 @@ if (!session && !bypassAuth) {
                 </Card>
               </section>
 
-              <section className="col-span-9">
+              <section className="col-span-1 md:col-span-9">
                 <Card>
                   <div className="mb-4 flex items-center justify-between">
                     <div>
@@ -1835,7 +1805,7 @@ if (!session && !bypassAuth) {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-7 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
                     {weekDataWithEvents.map((day) => (
                       <DayColumn
                         key={day.id}
@@ -1849,8 +1819,8 @@ if (!session && !bypassAuth) {
               </section>
             </div>
 
-            <div className="grid grid-cols-12 gap-4">
-              <section className="col-span-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+              <section className="col-span-1 md:col-span-6">
                 <Card title="GROCERY LIST ✦">
                                     <div className="mb-2 flex items-center justify-between">
                     <div />
@@ -1867,7 +1837,7 @@ if (!session && !bypassAuth) {
                 </Card>
               </section>
 
-              <section className="col-span-6">
+              <section className="col-span-1 md:col-span-6">
                 <Card title="TO-DO LIST ✦">
                                     <div className="mb-2 flex items-center justify-between">
                     <div />
@@ -1885,7 +1855,7 @@ if (!session && !bypassAuth) {
               </section>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <button
                 onClick={() => openAddModal("grocery")}
                 className="min-h-12 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(59,130,246,0.28)] transition hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:scale-95"
@@ -1900,8 +1870,8 @@ if (!session && !bypassAuth) {
               </button>
             </div>
 
-            <div className="grid grid-cols-12 gap-4">
-              <section className="col-span-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+              <section className="col-span-1 md:col-span-6">
                 <Card title="LONG TERM PROJECTS ✦">
                                     <div className="mb-2 flex items-center justify-between">
                     <div />
@@ -1918,7 +1888,7 @@ if (!session && !bypassAuth) {
                 </Card>
               </section>
 
-              <section className="col-span-6">
+              <section className="col-span-1 md:col-span-6">
                 <Card title="GIFT IDEAS ✦">
                                     <div className="mb-2 flex items-center justify-between">
                     <div />
@@ -1936,7 +1906,7 @@ if (!session && !bypassAuth) {
               </section>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <button
                 onClick={() => openAddModal("project")}
                 className="min-h-12 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(139,92,246,0.28)] transition hover:-translate-y-0.5 hover:from-violet-500 hover:to-fuchsia-500 active:scale-95"

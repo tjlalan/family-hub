@@ -984,7 +984,24 @@ export default function FamilyHubDashboardPrototype() {
   const [authLoading, setAuthLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const [isWeekSectionOpen, setIsWeekSectionOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
+useEffect(() => {
+  const checkMobile = () => {
+    const mobile = window.innerWidth < 768;
+    setIsMobile(mobile);
+    setIsWeekSectionOpen(!mobile);
+  };
+
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
+  return () => {
+    window.removeEventListener("resize", checkMobile);
+  };
+}, []);
+  
   useEffect(() => {
   const loadSession = async () => {
     const { data } = await supabase.auth.getSession();
@@ -1770,40 +1787,50 @@ if (!session && !bypassAuth) {
               <section className="col-span-1 md:col-span-9">
                 <Card>
                   <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <SectionLabel label="Calendar" color="text-blue-500" />
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => shiftWeek(-7)}
-                          className="rounded-2xl bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
-                        >
-                          ←
-                        </button>
-                        <div>
-                          <h2 className="text-xl font-semibold tracking-[-0.03em] text-neutral-900">THIS WEEK ✦</h2>
-                          <div className="text-sm text-neutral-500">{weekRangeLabel}</div>
-                        </div>
-                        <button
-                          onClick={() => shiftWeek(7)}
-                          className="rounded-2xl bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
-                        >
-                          →
-                        </button>
-                        <button
-                          onClick={jumpToTodayWeek}
-                          className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
-                        >
-                          Today
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setAppView("month")}
-                      className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(59,130,246,0.28)] transition hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:scale-95"
-                    >
-                      Month View
-                    </button>
-                  </div>
+                   <div>
+                    <SectionLabel label="Calendar" color="text-blue-500" />
+                    <div className="flex items-center gap-2">
+                     <button
+                      onClick={() => shiftWeek(-7)}
+                      className="rounded-2xl bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
+                     >
+                      ←
+      </button>
+      <div>
+        <h2 className="text-xl font-semibold tracking-[-0.03em] text-neutral-900">THIS WEEK ✦</h2>
+        <div className="text-sm text-neutral-500">{weekRangeLabel}</div>
+      </div>
+      <button
+        onClick={() => shiftWeek(7)}
+        className="rounded-2xl bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
+      >
+        →
+      </button>
+      <button
+        onClick={jumpToTodayWeek}
+        className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
+      >
+        Today
+      </button>
+    </div>
+  </div>
+
+  <div className="flex items-center gap-2">
+    <button
+      onClick={() => setIsWeekSectionOpen((current) => !current)}
+      className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
+    >
+      {isWeekSectionOpen ? "Hide Week" : "Show Week"}
+    </button>
+
+    <button
+      onClick={() => setAppView("month")}
+      className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(59,130,246,0.28)] transition hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:scale-95"
+    >
+      Month View
+    </button>
+  </div>
+</div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
                     {weekDataWithEvents.map((day) => (

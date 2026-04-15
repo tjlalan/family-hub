@@ -1244,58 +1244,6 @@ useEffect(() => {
     localStorage.setItem("weekStartDate", weekStartDate.toISOString());
   }, [weekStartDate, hasLoadedWeekData]);
 
-if (authLoading) {
-  return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef2ff_0%,_#f8fafc_34%,_#f5f5f5_100%)] text-neutral-900">
-      <div className="mx-auto flex min-h-screen max-w-[1280px] items-center justify-center p-4">
-        <div className="rounded-[28px] bg-white/80 px-6 py-4 text-sm font-medium text-slate-600 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/90 backdrop-blur-xl">
-          Loading Family Hub...
-        </div>
-      </div>
-    </div>
-  );
-}
-
-if (!session) {
-  return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef2ff_0%,_#f8fafc_34%,_#f5f5f5_100%)] text-neutral-900">
-      <div className="mx-auto flex min-h-screen max-w-[560px] items-center justify-center p-4">
-        <div className="w-full rounded-[28px] bg-white/80 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/90 backdrop-blur-xl">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-violet-500">
-            Family Hub
-          </div>
-          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">
-            Sign in
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Enter your email and we’ll send you a magic link.
-          </p>
-
-          <input
-            type="email"
-            value={authEmail}
-            onChange={(e) => setAuthEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="mt-4 h-12 w-full rounded-2xl border border-neutral-200 px-4 text-base text-neutral-900 outline-none transition focus:border-blue-400"
-          />
-
-          <button
-            onClick={() => void signInWithMagicLink()}
-            className="mt-4 min-h-12 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(59,130,246,0.28)] transition hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:scale-95"
-          >
-            Email me a sign-in link
-          </button>
-
-          {authMessage ? (
-            <div className="mt-4 rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-900 ring-1 ring-blue-100">
-              {authMessage}
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
 
   useEffect(() => {
     if (!hasLoadedMonthLunchData) return;
@@ -1704,6 +1652,59 @@ function updateListState(type: ListType, updater: (items: ListItem[]) => ListIte
       <div className="mx-auto flex min-h-screen max-w-[1280px] items-center justify-center p-4">
         <div className="rounded-[28px] bg-white/80 px-6 py-4 text-sm font-medium text-slate-600 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/90 backdrop-blur-xl">
           Loading Family Hub...
+        </div>
+      </div>
+    </div>
+  );
+}
+
+if (authLoading) {
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef2ff_0%,_#f8fafc_34%,_#f5f5f5_100%)] text-neutral-900">
+      <div className="mx-auto flex min-h-screen max-w-[1280px] items-center justify-center p-4">
+        <div className="rounded-[28px] bg-white/80 px-6 py-4 text-sm font-medium text-slate-600 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/90 backdrop-blur-xl">
+          Loading Family Hub...
+        </div>
+      </div>
+    </div>
+  );
+}
+
+if (!session) {
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef2ff_0%,_#f8fafc_34%,_#f5f5f5_100%)] text-neutral-900">
+      <div className="mx-auto flex min-h-screen max-w-[560px] items-center justify-center p-4">
+        <div className="w-full rounded-[28px] bg-white/80 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/90 backdrop-blur-xl">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-violet-500">
+            Family Hub
+          </div>
+          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+            Sign in
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Enter your email and we’ll send you a magic link.
+          </p>
+
+          <input
+            type="email"
+            value={authEmail}
+            onChange={(e) => setAuthEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="mt-4 h-12 w-full rounded-2xl border border-neutral-200 px-4 text-base text-neutral-900 outline-none transition focus:border-blue-400"
+          />
+
+          <button
+            onClick={() => void signInWithMagicLink()}
+            className="mt-4 min-h-12 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(59,130,246,0.28)] transition hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:scale-95"
+          >
+            Email me a sign-in link
+          </button>
+
+          {authMessage ? (
+            <div className="mt-4 rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-900 ring-1 ring-blue-100">
+              {authMessage}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

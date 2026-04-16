@@ -399,12 +399,17 @@ function ChecklistItem({
   isEditing,
   editValue,
   isDragging,
+  showMobileReorder,
+  canMoveUp,
+  canMoveDown,
   onToggle,
   onStartEdit,
   onEditChange,
   onEditSave,
   onEditCancel,
   onDelete,
+  onMoveUp,
+  onMoveDown,
   onDragStart,
   onDragOver,
   onDrop,
@@ -415,12 +420,17 @@ function ChecklistItem({
   isEditing: boolean;
   editValue: string;
   isDragging: boolean;
+  showMobileReorder: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onToggle: () => void;
   onStartEdit: () => void;
   onEditChange: (value: string) => void;
   onEditSave: () => void;
   onEditCancel: () => void;
   onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   onDragStart: () => void;
   onDragOver: () => void;
   onDrop: () => void;
@@ -428,7 +438,7 @@ function ChecklistItem({
 }) {
   return (
     <div
-      draggable={!isEditing}
+      draggable={!isEditing && !showMobileReorder}
       onDragStart={onDragStart}
       onDragOver={(e) => {
         e.preventDefault();
@@ -447,7 +457,34 @@ function ChecklistItem({
         isDragging ? "opacity-50 ring-2 ring-violet-300" : "hover:bg-slate-50",
       ].join(" ")}
     >
-      <div className="cursor-grab text-neutral-400">⋮⋮</div>
+      {showMobileReorder ? (
+  <div className="flex flex-col gap-1">
+    <button
+      type="button"
+      disabled={!canMoveUp}
+      onClick={(e) => {
+        e.stopPropagation();
+        onMoveUp();
+      }}
+      className="rounded-lg bg-neutral-100 px-2 py-1 text-xs text-neutral-700 disabled:opacity-30"
+    >
+      ↑
+    </button>
+    <button
+      type="button"
+      disabled={!canMoveDown}
+      onClick={(e) => {
+        e.stopPropagation();
+        onMoveDown();
+      }}
+      className="rounded-lg bg-neutral-100 px-2 py-1 text-xs text-neutral-700 disabled:opacity-30"
+    >
+      ↓
+    </button>
+  </div>
+) : (
+  <div className="cursor-grab text-neutral-400">⋮⋮</div>
+)}
 
       <input
         checked={checked}
@@ -997,6 +1034,19 @@ useEffect(() => {
   checkMobile();
   window.addEventListener("resize", checkMobile);
 
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
+
+useEffect(() => {
+  const checkMobile = () => {
+    const mobile = window.innerWidth < 768;
+    setIsMobile(mobile);
+    setIsWeekSectionOpen(!mobile);
+  };
+
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
   return () => {
     window.removeEventListener("resize", checkMobile);
   };
@@ -1100,6 +1150,21 @@ async function signInWithMagicLink() {
   }
 
   setAuthMessage("Check your email for the sign-in link.");
+}
+
+function moveItemByDirection(type: ListType, id: string, direction: "up" | "down") {
+  updateListState(type, (items) => {
+    const index = items.findIndex((item) => item.id === id);
+    if (index === -1) return items;
+
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= items.length) return items;
+
+    const next = [...items];
+    const [moved] = next.splice(index, 1);
+    next.splice(targetIndex, 0, moved);
+    return next;
+  });
 }
 
 async function signOut() {
@@ -1579,27 +1644,32 @@ function updateListState(type: ListType, updater: (items: ListItem[]) => ListIte
   }
 
   function renderList(items: ListItem[], type: ListType) {
-    return items.map((item) => (
-      <ChecklistItem
-        key={item.id}
-        label={item.title}
-        checked={item.completed}
-        isEditing={editingItemType === type && editingItemId === item.id}
-        editValue={editingItemType === type && editingItemId === item.id ? editItemName : item.title}
-        isDragging={Boolean((draggingItemType === type && draggingItemId === item.id) || dragOverItemId === item.id)}
-        onToggle={() => toggleInList(type, item.id)}
-        onStartEdit={() => startEditItem(type, item.id, item.title)}
-        onEditChange={setEditItemName}
-        onEditSave={saveInlineEdit}
-        onEditCancel={cancelInlineEdit}
-        onDelete={() => deleteItem(type, item.id)}
-        onDragStart={() => handleDragStart(type, item.id)}
-        onDragOver={() => handleDragOver(item.id)}
-        onDrop={() => handleDrop(type, item.id)}
-        onDragEnd={handleDragEnd}
-      />
-    ));
-  }
+  return items.map((item, index) => (
+    <ChecklistItem
+      key={item.id}
+      label={item.title}
+      checked={item.completed}
+      isEditing={editingItemType === type && editingItemId === item.id}
+      editValue={editingItemType === type && editingItemId === item.id ? editItemName : item.title}
+      isDragging={Boolean((draggingItemType === type && draggingItemId === item.id) || dragOverItemId === item.id)}
+      showMobileReorder={isMobile}
+      canMoveUp={index > 0}
+      canMoveDown={index < items.length - 1}
+      onToggle={() => toggleInList(type, item.id)}
+      onStartEdit={() => startEditItem(type, item.id, item.title)}
+      onEditChange={setEditItemName}
+      onEditSave={saveInlineEdit}
+      onEditCancel={cancelInlineEdit}
+      onDelete={() => deleteItem(type, item.id)}
+      onMoveUp={() => moveItemByDirection(type, item.id, "up")}
+      onMoveDown={() => moveItemByDirection(type, item.id, "down")}
+      onDragStart={() => handleDragStart(type, item.id)}
+      onDragOver={() => handleDragOver(item.id)}
+      onDrop={() => handleDrop(type, item.id)}
+      onDragEnd={handleDragEnd}
+    />
+  ));
+}
 
   function clearChecked(type: ListType) {
     updateListState(type, (items) => items.filter((item) => !item.completed));

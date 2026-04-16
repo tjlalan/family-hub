@@ -1786,69 +1786,64 @@ if (!session && !bypassAuth) {
 
               <section className="col-span-1 md:col-span-9">
                 <Card>
-                  <div className="mb-4 flex items-center justify-between">
-                   <div>
-                    <SectionLabel label="Calendar" color="text-blue-500" />
-                    <div className="flex items-center gap-2">
-                     <button
-                      onClick={() => shiftWeek(-7)}
-                      className="rounded-2xl bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
-                     >
-                      ←
+  <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div>
+      <SectionLabel label="Calendar" color="text-blue-500" />
+      <div className="text-xl font-semibold tracking-[-0.03em] text-neutral-900">THIS WEEK ✦</div>
+      <div className="text-sm text-neutral-500">{weekRangeLabel}</div>
+    </div>
+
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        onClick={() => shiftWeek(-7)}
+        className="rounded-2xl bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
+      >
+        ←
       </button>
-      <div>
-        <h2 className="text-xl font-semibold tracking-[-0.03em] text-neutral-900">THIS WEEK ✦</h2>
-        <div className="text-sm text-neutral-500">{weekRangeLabel}</div>
-      </div>
+
       <button
         onClick={() => shiftWeek(7)}
         className="rounded-2xl bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
       >
         →
       </button>
+
       <button
         onClick={jumpToTodayWeek}
         className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
       >
         Today
       </button>
+
+      <button
+        onClick={() => setIsWeekSectionOpen((current) => !current)}
+        className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
+      >
+        {isWeekSectionOpen ? "Hide Week" : "Show Week"}
+      </button>
+
+      <button
+        onClick={() => setAppView("month")}
+        className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(59,130,246,0.28)] transition hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:scale-95"
+      >
+        Month View
+      </button>
     </div>
   </div>
 
-  <div className="flex items-center gap-2">
-    <button
-      onClick={() => setIsWeekSectionOpen((current) => !current)}
-      className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-neutral-50"
-    >
-      {isWeekSectionOpen ? "Hide Week" : "Show Week"}
-    </button>
-
-    <button
-      onClick={() => setAppView("month")}
-      className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(59,130,246,0.28)] transition hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:scale-95"
-    >
-      Month View
-    </button>
-  </div>
-</div>
-
-                  {isWeekSectionOpen ? (
-  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
-    {weekDataWithEvents.map((day) => (
-      <DayColumn
-        key={day.id}
-        day={day}
-        lunchStatus={lunchStatusByDayId[day.id] ?? "unset"}
-        onClick={() => setSelectedDayId(day.id)}
-      />
-    ))}
-  </div>
-) : (
-  <div className="rounded-2xl bg-slate-50 px-4 py-6 text-sm text-slate-500 ring-1 ring-slate-100">
-    Week view is hidden on mobile to keep the dashboard focused on lists.
-  </div>
-)}
-                </Card>
+  {isWeekSectionOpen ? (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
+      {weekDataWithEvents.map((day) => (
+        <DayColumn
+          key={day.id}
+          day={day}
+          lunchStatus={lunchStatusByDayId[day.id] ?? "unset"}
+          onClick={() => setSelectedDayId(day.id)}
+        />
+      ))}
+    </div>
+  ) : null}
+</Card>
               </section>
             </div>
 

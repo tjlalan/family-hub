@@ -1209,10 +1209,6 @@ async function loadListItemsFromSupabase() {
     return;
   }
 
-useEffect(() => {
-  void loadListItemsFromSupabase();
-}, []);
-  
   const groceryItems: GroceryItem[] = [];
   const todoItems: TaskItem[] = [];
   const projectItems: TaskItem[] = [];
@@ -1244,6 +1240,10 @@ useEffect(() => {
   setGifts(giftItems);
   setHasLoadedLists(true);
 }
+
+useEffect(() => {
+  void loadListItemsFromSupabase();
+}, []);
 
 useEffect(() => {
   const lunchChannel = supabase

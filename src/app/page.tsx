@@ -1054,21 +1054,6 @@ useEffect(() => {
 
   return () => window.removeEventListener("resize", checkMobile);
 }, []);
-
-useEffect(() => {
-  const checkMobile = () => {
-    const mobile = window.innerWidth < 768;
-    setIsMobile(mobile);
-    setIsWeekSectionOpen(!mobile);
-  };
-
-  checkMobile();
-  window.addEventListener("resize", checkMobile);
-
-  return () => {
-    window.removeEventListener("resize", checkMobile);
-  };
-}, []);
   
   useEffect(() => {
   const loadSession = async () => {
@@ -1206,7 +1191,6 @@ async function loadLunchPlansFromSupabase() {
 
   setMonthLunchData(map);
   setHasLoadedMonthLunchData(true);
-  console.log("Loaded lunch plans from Supabase:", map);
 }
 
 useEffect(() => {
@@ -1225,6 +1209,10 @@ async function loadListItemsFromSupabase() {
     return;
   }
 
+useEffect(() => {
+  void loadListItemsFromSupabase();
+}, []);
+  
   const groceryItems: GroceryItem[] = [];
   const todoItems: TaskItem[] = [];
   const projectItems: TaskItem[] = [];
@@ -1272,55 +1260,6 @@ useEffect(() => {
   return () => {
     void supabase.removeChannel(lunchChannel);
   };
-}, []);
-
-useEffect(() => {
-  const loadLists = async () => {
-    const { data, error } = await supabase
-      .from("list_items")
-      .select("*")
-      .order("sort_order", { ascending: true });
-
-    if (error) {
-      console.error("Error loading list items:", error);
-      setHasLoadedLists(true);
-      return;
-    }
-
-    const groceryItems: GroceryItem[] = [];
-    const todoItems: TaskItem[] = [];
-    const projectItems: TaskItem[] = [];
-    const giftItems: TaskItem[] = [];
-
-    (data ?? []).forEach(
-      (row: {
-        id: string;
-        list_type: "grocery" | "todo" | "project" | "gift";
-        title: string;
-        completed: boolean;
-      }) => {
-        const item = {
-          id: row.id,
-          title: row.title,
-          completed: row.completed,
-        };
-
-        if (row.list_type === "grocery") groceryItems.push(item);
-        if (row.list_type === "todo") todoItems.push(item);
-        if (row.list_type === "project") projectItems.push(item);
-        if (row.list_type === "gift") giftItems.push(item);
-      }
-    );
-
-    setGroceries(groceryItems);
-    setTasks(todoItems);
-    setProjects(projectItems);
-    setGifts(giftItems);
-    setHasLoadedLists(true);
-    console.log("Loaded list items from Supabase:", data);
-  };
-
-  void loadLists();
 }, []);
 
   useEffect(() => {
@@ -1519,8 +1458,6 @@ async function updateMonthLunch(isoDate: string, lunchStatus: LunchStatus) {
     console.error("Error saving lunch plan:", error);
     return;
   }
-
-  console.log("Saved lunch plan:", isoDate, lunchStatus);
 }
 
 function updateLunchByIsoDate(isoDate: string, lunchStatus: LunchStatus) {
@@ -1709,17 +1646,12 @@ function updateListState(type: ListType, updater: (items: ListItem[]) => ListIte
           ? "Add Long Term Project"
           : "Add Gift Idea";
 
-  if (!hasLoadedMonthLunchData || !hasLoadedLists) {
-  return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef2ff_0%,_#f8fafc_34%,_#f5f5f5_100%)] text-neutral-900">
-      <div className="mx-auto flex min-h-screen max-w-[1280px] items-center justify-center p-4">
-        <div className="rounded-[28px] bg-white/80 px-6 py-4 text-sm font-medium text-slate-600 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/90 backdrop-blur-xl">
-          Loading Family Hub...
-        </div>
-      </div>
-    </div>
-  );
-}
+const isLocalhost =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
+
+const bypassAuth = isLocalhost;
 
 if (authLoading) {
   return (
@@ -1732,13 +1664,6 @@ if (authLoading) {
     </div>
   );
 }
-
-const isLocalhost =
-  typeof window !== "undefined" &&
-  (window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1");
-
-const bypassAuth = isLocalhost;
 
 if (!session && !bypassAuth) {
   return (
@@ -1775,6 +1700,18 @@ if (!session && !bypassAuth) {
               {authMessage}
             </div>
           ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+  if (!hasLoadedMonthLunchData || !hasLoadedLists) {
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef2ff_0%,_#f8fafc_34%,_#f5f5f5_100%)] text-neutral-900">
+      <div className="mx-auto flex min-h-screen max-w-[1280px] items-center justify-center p-4">
+        <div className="rounded-[28px] bg-white/80 px-6 py-4 text-sm font-medium text-slate-600 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/90 backdrop-blur-xl">
+          Loading Family Hub...
         </div>
       </div>
     </div>

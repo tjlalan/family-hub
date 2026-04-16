@@ -358,7 +358,7 @@ function DayColumn({
     <button
       onClick={onClick}
       className={[
-        "flex h-full min-h-[220px] sm:min-h-[280px] lg:min-h-[380px] flex-col rounded-[24px] p-3 text-left transition",
+        "flex h-full min-h-[180px] sm:min-h-[220px] lg:min-h-[260px] flex-col rounded-[24px] p-3 text-left transition",
         day.isToday
           ? "border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-white shadow-[0_16px_32px_rgba(59,130,246,0.14)]"
           : "border border-white/90 bg-white/70 shadow-sm hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white",
@@ -373,10 +373,16 @@ function DayColumn({
 
       <div className="mt-3">
         {lunchStatus !== "unset" && (
-          <div className="text-lg text-slate-700">
-            <FontAwesomeIcon icon={lunchStatus === "pack" ? faBagShopping : faDollarSign} />
-          </div>
-        )}
+  <div
+    className={`inline-flex items-center justify-center self-start rounded-full px-2 py-1 text-sm ${
+      lunchStatus === "pack"
+        ? "bg-amber-100 text-amber-600"
+        : "bg-emerald-100 text-emerald-600"
+    }`}
+  >
+    <FontAwesomeIcon icon={lunchStatus === "pack" ? faBagShopping : faDollarSign} />
+  </div>
+)}
       </div>
 
       <div className="mt-4 space-y-2">
@@ -627,9 +633,15 @@ function MonthCellCard({
             {cell.dayNumber}
           </div>
           {cell.lunchStatus !== "unset" ? (
-            <div className="text-base text-neutral-700">
-              <FontAwesomeIcon icon={cell.lunchStatus === "pack" ? faBagShopping : faDollarSign} />
-            </div>
+            <div
+  className={`flex items-center justify-center rounded-full px-2 py-1 text-sm ${
+    cell.lunchStatus === "pack"
+      ? "bg-amber-100 text-amber-600"
+      : "bg-emerald-100 text-emerald-600"
+  }`}
+>
+  <FontAwesomeIcon icon={cell.lunchStatus === "pack" ? faBagShopping : faDollarSign} />
+</div>
           ) : null}
         </div>
 
@@ -664,9 +676,15 @@ function MonthCellCard({
           {cell.dayNumber}
         </div>
         {cell.lunchStatus !== "unset" ? (
-          <div className="text-base text-neutral-700">
-            <FontAwesomeIcon icon={cell.lunchStatus === "pack" ? faBagShopping : faDollarSign} />
-          </div>
+          <div
+  className={`flex items-center justify-center rounded-full px-2 py-1 text-sm ${
+    cell.lunchStatus === "pack"
+      ? "bg-amber-100 text-amber-600"
+      : "bg-emerald-100 text-emerald-600"
+  }`}
+>
+  <FontAwesomeIcon icon={cell.lunchStatus === "pack" ? faBagShopping : faDollarSign} />
+</div>
         ) : null}
       </div>
 
@@ -1813,8 +1831,8 @@ if (!session && !bypassAuth) {
               <section className="col-span-1 md:col-span-3">
                 <Card title="TODAY ✦">
                   <SectionLabel label="Focus" color="text-amber-500" />
-                  <div className="flex flex-col gap-4">
-                    <div className="rounded-[24px] bg-gradient-to-br from-slate-50 to-white p-4 ring-1 ring-slate-100">
+                  <div className="flex flex-col gap-3">
+                    <div className="rounded-[24px] bg-gradient-to-br from-slate-50 to-white p-3 ring-1 ring-slate-100">
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Events</div>
                       <div className="mt-2 space-y-2 text-base text-neutral-900">
                         {today.events.length > 0 ? (
@@ -1827,7 +1845,7 @@ if (!session && !bypassAuth) {
                       </div>
                     </div>
 
-                    <div className="rounded-[24px] bg-gradient-to-br from-amber-50 to-orange-50 p-4 ring-1 ring-amber-100">
+                    <div className="rounded-[24px] bg-gradient-to-br from-amber-50 to-orange-50 p-3 ring-1 ring-amber-100">
                       <div className="text-xl font-semibold tracking-[-0.03em] text-neutral-900">Packing Lunch?</div>
 
                       <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-800/70">Lunch Today</div>

@@ -1251,20 +1251,8 @@ useEffect(() => {
     )
     .subscribe();
 
-  const listChannel = supabase
-    .channel("realtime-list-items")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "list_items" },
-      () => {
-        void loadListItemsFromSupabase();
-      }
-    )
-    .subscribe();
-
   return () => {
     void supabase.removeChannel(lunchChannel);
-    void supabase.removeChannel(listChannel);
   };
 }, []);
 

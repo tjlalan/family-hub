@@ -1039,6 +1039,8 @@ export default function FamilyHubDashboardPrototype() {
   const [authLoading, setAuthLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [isOtpSent, setIsOtpSent] = useState(false);
   const [isWeekSectionOpen, setIsWeekSectionOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -1142,9 +1144,6 @@ async function signInWithMagicLink() {
 
   const { error } = await supabase.auth.signInWithOtp({
     email: trimmedEmail,
-    options: {
-      emailRedirectTo: "https://family-hub-iota-brown.vercel.app",
-    },
   });
 
   if (error) {
@@ -1152,7 +1151,23 @@ async function signInWithMagicLink() {
     return;
   }
 
-  setAuthMessage("Check your email for the sign-in link.");
+  setIsOtpSent(true);
+  setAuthMessage("Check your email for the 6-digit code.");
+}
+
+async function verifyOtp() {
+  const trimmedEmail = authEmail.trim().toLowerCase();
+
+  const { error } = await supabase.auth.verifyOtp({
+    email: trimmedEmail,
+    token: otpCode,
+    type: "email",
+  });
+
+  if (error) {
+    setAuthMessage(error.message);
+    return;
+  }
 }
 
 function moveItemByDirection(type: ListType, id: string, direction: "up" | "down") {
@@ -1681,19 +1696,38 @@ if (!session && !bypassAuth) {
           </p>
 
           <input
-            type="email"
-            value={authEmail}
-            onChange={(e) => setAuthEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="mt-4 h-12 w-full rounded-2xl border border-neutral-200 px-4 text-base text-neutral-900 outline-none transition focus:border-blue-400"
-          />
+  type="email"
+  value={authEmail}
+  onChange={(e) => setAuthEmail(e.target.value)}
+  placeholder="you@example.com"
+  className="mt-4 h-12 w-full rounded-2xl border border-neutral-200 px-4 text-base text-neutral-900 outline-none transition focus:border-blue-400"
+/>
 
-          <button
-            onClick={() => void signInWithMagicLink()}
-            className="mt-4 min-h-12 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(59,130,246,0.28)] transition hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:scale-95"
-          >
-            Email me a sign-in link
-          </button>
+{!isOtpSent ? (
+  <button
+    onClick={() => void signInWithMagicLink()}
+    className="mt-4 min-h-12 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(59,130,246,0.28)] transition hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 active:scale-95"
+  >
+    Send code
+  </button>
+) : (
+  <>
+    <input
+      type="text"
+      value={otpCode}
+      onChange={(e) => setOtpCode(e.target.value)}
+      placeholder="Enter 6-digit code"
+      className="mt-4 h-12 w-full rounded-2xl border border-neutral-200 px-4 text-base text-neutral-900 outline-none transition focus:border-blue-400"
+    />
+
+    <button
+      onClick={() => void verifyOtp()}
+      className="mt-4 min-h-12 w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-green-600 px-4 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(16,185,129,0.28)] transition hover:-translate-y-0.5 hover:from-emerald-500 hover:to-green-500 active:scale-95"
+    >
+      Verify code
+    </button>
+  </>
+)}
 
           {authMessage ? (
             <div className="mt-4 rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-900 ring-1 ring-blue-100">

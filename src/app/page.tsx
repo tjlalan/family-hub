@@ -1375,7 +1375,7 @@ useEffect(() => {
     void fetchGoogleCalendarEvents();
   }, [appView, googleAccessToken, monthDate, weekStartDate]);
 
-  useEffect(() => {
+useEffect(() => {
   if (!googleAccessToken) return;
 
   const interval = window.setInterval(async () => {
@@ -1432,9 +1432,11 @@ useEffect(() => {
     } catch (error) {
       console.error("Auto-refresh Google Calendar failed:", error);
     }
-  }, 1000 * 60 * 5); // every 5 minutes
+  }, 1000 * 60 * 5);
 
-  return () => window.clearInterval(interval);
+  return () => {
+    window.clearInterval(interval);
+  };
 }, [appView, googleAccessToken, monthDate, weekStartDate]);
 
   const lunchStatusByDayId = useMemo(() => {

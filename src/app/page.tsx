@@ -117,7 +117,9 @@ function formatIsoDate(date: Date) {
 
 const TODAY_YEAR = getNow().getFullYear();
 const TODAY_MONTH = getNow().getMonth();
-const TODAY_ISO = formatIsoDate(getNow());
+function getTodayIso() {
+  return formatIsoDate(new Date());
+}
 
 const initialWeekData: DaySummary[] = [
   {
@@ -238,7 +240,7 @@ function buildWeekFromStart(startDate: Date): DaySummary[] {
       name: weekdayNames[date.getDay()],
       date: dateLabel,
       isoDate,
-      isToday: isoDate === TODAY_ISO,
+      isToday: isoDate === getTodayIso(),
       events: existing?.events ?? [],
       moreCount: existing?.moreCount ?? 0,
     } satisfies DaySummary;
@@ -360,7 +362,7 @@ function DayColumn({
       className={[
         "flex h-full min-h-[180px] sm:min-h-[220px] lg:min-h-[260px] flex-col rounded-[24px] p-3 text-left transition",
         day.isToday
-          ? "border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-white shadow-[0_16px_32px_rgba(59,130,246,0.14)]"
+          ? "border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-white shadow-[0_16px_32px_rgba(59,130,246,0.14)] animate-pulse"
           : "border border-white/90 bg-white/70 shadow-sm hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white",
       ].join(" ")}
     >
@@ -388,9 +390,13 @@ function DayColumn({
       <div className="mt-4 space-y-2">
         {day.events.slice(0, 2).map((event) => (
           <div key={event.id} className="rounded-2xl bg-white p-2.5 shadow-sm ring-1 ring-slate-100">
-            <div className="text-sm font-medium text-slate-900">{event.title}</div>
-            <div className="text-xs text-slate-500">{event.time || ""}</div>
-          </div>
+  <div className="text-sm font-medium text-slate-900 break-words line-clamp-2">
+    {event.title}
+  </div>
+  <div className="text-xs text-slate-500 truncate">
+    {event.time || ""}
+  </div>
+</div>
         ))}
       </div>
 
@@ -774,7 +780,7 @@ function MonthView({
         dateLabel,
         isoDate,
         isCurrentMonth,
-        isToday: isoDate === TODAY_ISO,
+        isToday: isoDate === getTodayIso(),
         linkedWeekDay: linkedWeekDay
           ? {
               ...linkedWeekDay,
@@ -1050,6 +1056,16 @@ useEffect(() => {
     setIsMobile(mobile);
     setIsWeekSectionOpen(!mobile);
   };
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    const newStart = getStartOfWeek(new Date());
+    setWeekStartDate(newStart);
+    setWeekData(buildWeekFromStart(newStart));
+  }, 1000 * 60); // every minute
+
+  return () => clearInterval(interval);
+}, []);
 
   checkMobile();
   window.addEventListener("resize", checkMobile);
@@ -1358,6 +1374,68 @@ useEffect(() => {
 
     void fetchGoogleCalendarEvents();
   }, [appView, googleAccessToken, monthDate, weekStartDate]);
+
+  useEffect(() => {
+  if (!googleAccessToken) return;
+
+  const interval = window.setInterval(async () => {
+    try {
+      let timeMin: string;
+      let timeMax: string;
+
+      if (appView === "month") {
+        const year = monthDate.getFullYear();
+        const month = monthDate.getMonth();
+        const firstOfMonth = new Date(year, month, 1);
+        const startOffset = firstOfMonth.getDay();
+        const gridStart = new Date(year, month, 1 - startOffset);
+        gridStart.setHours(0, 0, 0, 0);
+
+        const gridEnd = new Date(gridStart);
+        gridEnd.setDate(gridStart.getDate() + 42);
+        gridEnd.setHours(0, 0, 0, 0);
+
+        timeMin = gridStart.toISOString();
+        timeMax = gridEnd.toISOString();
+      } else {
+        const weekStart = new Date(weekStartDate);
+        weekStart.setHours(0, 0, 0, 0);
+
+        const weekEnd = new Date(weekStartDate);
+        weekEnd.setDate(weekStartDate.getDate() + 7);
+        weekEnd.setHours(0, 0, 0, 0);
+
+        timeMin = weekStart.toISOString();
+        timeMax = weekEnd.toISOString();
+      }
+
+      const query = new URLSearchParams({
+        timeMin,
+        timeMax,
+        singleEvents: "true",
+        orderBy: "startTime",
+        maxResults: "250",
+      });
+
+      const response = await fetch(`${GOOGLE_CALENDAR_API_BASE}?${query.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${googleAccessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Google Calendar request failed with status ${response.status}`);
+      }
+
+      const data = (await response.json()) as { items?: GoogleCalendarApiEvent[] };
+      setCalendarEventsByDate(mapGoogleEventsByDate(data.items ?? []));
+    } catch (error) {
+      console.error("Auto-refresh Google Calendar failed:", error);
+    }
+  }, 1000 * 60 * 5); // every 5 minutes
+
+  return () => window.clearInterval(interval);
+}, [appView, googleAccessToken, monthDate, weekStartDate]);
 
   const lunchStatusByDayId = useMemo(() => {
     const map: Record<string, LunchStatus> = {};

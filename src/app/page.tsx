@@ -1057,16 +1057,6 @@ useEffect(() => {
     setIsWeekSectionOpen(!mobile);
   };
 
-useEffect(() => {
-  const interval = setInterval(() => {
-    const newStart = getStartOfWeek(new Date());
-    setWeekStartDate(newStart);
-    setWeekData(buildWeekFromStart(newStart));
-  }, 1000 * 60); // every minute
-
-  return () => clearInterval(interval);
-}, []);
-
   checkMobile();
   window.addEventListener("resize", checkMobile);
 
@@ -1306,6 +1296,16 @@ useEffect(() => {
     return () => window.clearInterval(interval);
   }, []);
 
+useEffect(() => {
+  const interval = setInterval(() => {
+    const newStart = getStartOfWeek(new Date());
+    setWeekStartDate(newStart);
+    setWeekData(buildWeekFromStart(newStart));
+  }, 1000 * 60);
+
+  return () => clearInterval(interval);
+}, []);
+  
   useEffect(() => {
     if (!googleAccessToken) return;
 
@@ -1375,7 +1375,69 @@ useEffect(() => {
     void fetchGoogleCalendarEvents();
   }, [appView, googleAccessToken, monthDate, weekStartDate]);
 
+useEffect(() => {
+  if (!googleAccessToken) return;
 
+  const interval = window.setInterval(async () => {
+    try {
+      let timeMin: string;
+      let timeMax: string;
+
+      if (appView === "month") {
+        const year = monthDate.getFullYear();
+        const month = monthDate.getMonth();
+        const firstOfMonth = new Date(year, month, 1);
+        const startOffset = firstOfMonth.getDay();
+        const gridStart = new Date(year, month, 1 - startOffset);
+        gridStart.setHours(0, 0, 0, 0);
+
+        const gridEnd = new Date(gridStart);
+        gridEnd.setDate(gridStart.getDate() + 42);
+        gridEnd.setHours(0, 0, 0, 0);
+
+        timeMin = gridStart.toISOString();
+        timeMax = gridEnd.toISOString();
+      } else {
+        const weekStart = new Date(weekStartDate);
+        weekStart.setHours(0, 0, 0, 0);
+
+        const weekEnd = new Date(weekStartDate);
+        weekEnd.setDate(weekStartDate.getDate() + 7);
+        weekEnd.setHours(0, 0, 0, 0);
+
+        timeMin = weekStart.toISOString();
+        timeMax = weekEnd.toISOString();
+      }
+
+      const query = new URLSearchParams({
+        timeMin,
+        timeMax,
+        singleEvents: "true",
+        orderBy: "startTime",
+        maxResults: "250",
+      });
+
+      const response = await fetch(`${GOOGLE_CALENDAR_API_BASE}?${query.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${googleAccessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Google Calendar request failed with status ${response.status}`);
+      }
+
+      const data = (await response.json()) as { items?: GoogleCalendarApiEvent[] };
+      setCalendarEventsByDate(mapGoogleEventsByDate(data.items ?? []));
+    } catch (error) {
+      console.error("Auto-refresh Google Calendar failed:", error);
+    }
+  }, 1000 * 60 * 5);
+
+  return () => {
+    window.clearInterval(interval);
+  };
+}, [appView, googleAccessToken, monthDate, weekStartDate]);
 
   const lunchStatusByDayId = useMemo(() => {
     const map: Record<string, LunchStatus> = {};

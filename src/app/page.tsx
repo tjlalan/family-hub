@@ -1049,6 +1049,7 @@ export default function FamilyHubDashboardPrototype() {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isWeekSectionOpen, setIsWeekSectionOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [weatherLabel, setWeatherLabel] = useState("Loading weather...");
 
 useEffect(() => {
   const checkMobile = () => {
@@ -1082,6 +1083,18 @@ useEffect(() => {
   return () => {
     subscription.unsubscribe();
   };
+}, []);
+
+useEffect(() => {
+  void loadWeather();
+}, []);
+
+useEffect(() => {
+  const interval = window.setInterval(() => {
+    void loadWeather();
+  }, 1000 * 60 * 15);
+
+  return () => window.clearInterval(interval);
 }, []);
 
   useEffect(() => {
@@ -1138,6 +1151,43 @@ useEffect(() => {
     }
     setHasLoadedWeekData(true);
   }, []);
+
+async function loadWeather() {
+  try {
+    // Example: Phoenix area
+    const lat = 33.45;
+    const lon = -112.07;
+
+    const response = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&temperature_unit=fahrenheit`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Weather request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const temp = Math.round(data.current?.temperature_2m ?? 0);
+    const code = data.current?.weather_code;
+
+    function weatherCodeToLabel(weatherCode: number) {
+      if ([0].includes(weatherCode)) return "Sunny";
+      if ([1, 2, 3].includes(weatherCode)) return "Partly Cloudy";
+      if ([45, 48].includes(weatherCode)) return "Foggy";
+      if ([51, 53, 55, 56, 57].includes(weatherCode)) return "Drizzle";
+      if ([61, 63, 65, 66, 67, 80, 81, 82].includes(weatherCode)) return "Rain";
+      if ([71, 73, 75, 77, 85, 86].includes(weatherCode)) return "Snow";
+      if ([95, 96, 99].includes(weatherCode)) return "Stormy";
+      return "Weather";
+    }
+
+    setWeatherLabel(`${temp}° ${weatherCodeToLabel(code)}`);
+  } catch (error) {
+    console.error("Failed to load weather:", error);
+    setWeatherLabel("Weather unavailable");
+  }
+}
 
 async function signInWithMagicLink() {
   setAuthMessage(null);
@@ -1305,7 +1355,7 @@ useEffect(() => {
 
   return () => clearInterval(interval);
 }, []);
-  
+
   useEffect(() => {
     if (!googleAccessToken) return;
 
@@ -1852,7 +1902,9 @@ if (!session && !bypassAuth) {
             </div>
 
             <div className="col-span-1 flex flex-wrap items-center gap-3 text-sm md:col-span-4 md:justify-end">
-              <div className="rounded-2xl bg-white px-3 py-2 text-neutral-700 shadow-sm ring-1 ring-black/5">72° Sunny</div>
+              <div className="rounded-2xl bg-white px-3 py-2 text-neutral-700 shadow-sm ring-1 ring-black/5">
+  {weatherLabel}
+</div>
               <div className="rounded-2xl bg-emerald-50 px-3 py-2 text-emerald-700 shadow-sm ring-1 ring-emerald-100">Sync ✓</div>
               <button
                 onClick={connectGoogleCalendar}

@@ -64,10 +64,6 @@ type SelectedMonthDay = {
   lunchStatus: LunchStatus;
 };
 
-type GoogleTokenResponse = {
-  access_token?: string;
-  error?: string;
-};
 
 type GoogleCalendarApiEvent = {
   id?: string;
@@ -77,24 +73,6 @@ type GoogleCalendarApiEvent = {
     dateTime?: string;
   };
 };
-
-declare global {
-  interface Window {
-    google?: {
-      accounts?: {
-        oauth2?: {
-          initTokenClient: (config: {
-            client_id: string;
-            scope: string;
-            callback: (response: GoogleTokenResponse) => void;
-          }) => {
-            requestAccessToken: () => void;
-          };
-        };
-      };
-    };
-  }
-}
 
 function getNow() {
   return new Date();
@@ -213,10 +191,6 @@ const initialMonthLunchData: MonthLunchMap = {
   "2026-04-18": "buy",
   "2026-04-19": "unset",
 };
-
-const GOOGLE_CLIENT_ID = "518556462383-7ome7i5li01rarcjqpvq9cfkqa07jctm.apps.googleusercontent.com";
-const GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
-const GOOGLE_CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
 
 function lunchLabel(status: LunchStatus) {
   if (status === "pack") return "Pack";
@@ -1009,7 +983,6 @@ function MonthLunchDrawer({
 }
 
 export default function FamilyHubDashboardPrototype() {
-  const googleTokenClientRef = useRef<{ requestAccessToken: () => void } | null>(null);
   const [weekData, setWeekData] = useState<DaySummary[]>(initialWeekData);
   const [weekStartDate, setWeekStartDate] = useState<Date>(getStartOfWeek(getNow()));
   const [currentTime, setCurrentTime] = useState<Date>(getNow());
@@ -1034,10 +1007,9 @@ export default function FamilyHubDashboardPrototype() {
   const [appView, setAppView] = useState<AppView>("dashboard");
   const [monthDate, setMonthDate] = useState(new Date(TODAY_YEAR, TODAY_MONTH, 1));
   const [bulkLunchEditMode, setBulkLunchEditMode] = useState(false);
-  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
   const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
+  const [googleCalendarStatusLoaded, setGoogleCalendarStatusLoaded] = useState(false);
   const [googleCalendarError, setGoogleCalendarError] = useState<string | null>(null);
-  const [googleCalendarReady, setGoogleCalendarReady] = useState(false);
   const [calendarEventsByDate, setCalendarEventsByDate] = useState<Record<string, CalendarEvent[]>>({});
   const [googleCalendarLoading, setGoogleCalendarLoading] = useState(false);
   const [calendarEventsMode, setCalendarEventsMode] = useState<"week" | "month">("week");
@@ -1050,6 +1022,31 @@ export default function FamilyHubDashboardPrototype() {
   const [isWeekSectionOpen, setIsWeekSectionOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [weatherLabel, setWeatherLabel] = useState("Loading weather...");
+
+useEffect(() => {
+  const loadGoogleCalendarStatus = async () => {
+    try {
+      const response = await fetch("/api/google/status");
+
+      if (!response.ok) {
+        throw new Error(`Status request failed with ${response.status}`);
+      }
+
+      const data = (await response.json()) as {
+        connected: boolean;
+        googleEmail?: string | null;
+      };
+
+      setGoogleCalendarConnected(data.connected);
+    } catch (error) {
+      console.error("Failed to load Google Calendar status:", error);
+    } finally {
+      setGoogleCalendarStatusLoaded(true);
+    }
+  };
+
+  void loadGoogleCalendarStatus();
+}, []);
 
 useEffect(() => {
   const checkMobile = () => {
@@ -1096,47 +1093,6 @@ useEffect(() => {
 
   return () => window.clearInterval(interval);
 }, []);
-
-  useEffect(() => {
-    const existingScript = document.querySelector('script[data-google-gsi="true"]');
-    if (existingScript) {
-      setGoogleCalendarReady(Boolean(window.google?.accounts?.oauth2));
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    script.dataset.googleGsi = "true";
-    script.onload = () => {
-      setGoogleCalendarReady(Boolean(window.google?.accounts?.oauth2));
-    };
-    script.onerror = () => {
-      setGoogleCalendarError("Google Calendar failed to load.");
-    };
-    document.body.appendChild(script);
-  }, []);
-
-  useEffect(() => {
-    if (!googleCalendarReady || !window.google?.accounts?.oauth2) return;
-
-    googleTokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: GOOGLE_CALENDAR_SCOPE,
-      callback: (response: GoogleTokenResponse) => {
-        if (response.error || !response.access_token) {
-          setGoogleCalendarError("Google Calendar authorization was not completed.");
-          setGoogleCalendarConnected(false);
-          return;
-        }
-
-        setGoogleAccessToken(response.access_token);
-        setGoogleCalendarConnected(true);
-        setGoogleCalendarError(null);
-      },
-    });
-  }, [googleCalendarReady]);
 
   useEffect(() => {
     const savedWeekStartDate = localStorage.getItem("weekStartDate");
@@ -1357,7 +1313,7 @@ useEffect(() => {
 }, []);
 
   useEffect(() => {
-    if (!googleAccessToken) return;
+    if (!googleCalendarConnected) return;
 
     const fetchGoogleCalendarEvents = async () => {
       setGoogleCalendarLoading(true);
@@ -1403,18 +1359,15 @@ useEffect(() => {
           maxResults: "250",
         });
 
-        const response = await fetch(`${GOOGLE_CALENDAR_API_BASE}?${query.toString()}`, {
-          headers: {
-            Authorization: `Bearer ${googleAccessToken}`,
-          },
-        });
+        const response = await fetch(`/api/google/events?${query.toString()}`);
 
-        if (!response.ok) {
-          throw new Error(`Google Calendar request failed with status ${response.status}`);
-        }
+if (!response.ok) {
+  throw new Error(`Calendar request failed with status ${response.status}`);
+}
 
-        const data = (await response.json()) as { items?: GoogleCalendarApiEvent[] };
-        setCalendarEventsByDate(mapGoogleEventsByDate(data.items ?? []));
+const data = (await response.json()) as { items?: GoogleCalendarApiEvent[] };
+setCalendarEventsByDate(mapGoogleEventsByDate(data.items ?? []));
+setGoogleCalendarConnected(true);
       } catch (error) {
         setGoogleCalendarError(error instanceof Error ? error.message : "Failed to fetch Google Calendar events.");
       } finally {
@@ -1423,10 +1376,10 @@ useEffect(() => {
     };
 
     void fetchGoogleCalendarEvents();
-  }, [appView, googleAccessToken, monthDate, weekStartDate]);
+  }, [appView, monthDate, weekStartDate, googleCalendarConnected]);
 
 useEffect(() => {
-  if (!googleAccessToken) return;
+  if (!googleCalendarConnected) return;
 
   const interval = window.setInterval(async () => {
     try {
@@ -1467,11 +1420,7 @@ useEffect(() => {
         maxResults: "250",
       });
 
-      const response = await fetch(`${GOOGLE_CALENDAR_API_BASE}?${query.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${googleAccessToken}`,
-        },
-      });
+      const response = await fetch(`/api/google/events?${query.toString()}`);
 
       if (!response.ok) {
         throw new Error(`Google Calendar request failed with status ${response.status}`);
@@ -1479,6 +1428,7 @@ useEffect(() => {
 
       const data = (await response.json()) as { items?: GoogleCalendarApiEvent[] };
       setCalendarEventsByDate(mapGoogleEventsByDate(data.items ?? []));
+      setGoogleCalendarConnected(true);
     } catch (error) {
       console.error("Auto-refresh Google Calendar failed:", error);
     }
@@ -1487,7 +1437,7 @@ useEffect(() => {
   return () => {
     window.clearInterval(interval);
   };
-}, [appView, googleAccessToken, monthDate, weekStartDate]);
+}, [appView, googleCalendarConnected, monthDate, weekStartDate]);
 
   const lunchStatusByDayId = useMemo(() => {
     const map: Record<string, LunchStatus> = {};
@@ -1763,24 +1713,9 @@ function updateListState(type: ListType, updater: (items: ListItem[]) => ListIte
     updateListState(type, (items) => items.filter((item) => !item.completed));
   }
 
-  function connectGoogleCalendar() {
-    if (!googleCalendarReady) {
-      setGoogleCalendarError("Google Calendar script is still loading. Try again in a moment.");
-      return;
-    }
-
-    if (!window.google?.accounts?.oauth2) {
-      setGoogleCalendarError("Google Calendar library did not load correctly.");
-      return;
-    }
-
-    if (!googleTokenClientRef.current) {
-      setGoogleCalendarError("Google Calendar is not ready yet. Try again in a moment.");
-      return;
-    }
-
-    googleTokenClientRef.current.requestAccessToken();
-  }
+function connectGoogleCalendar() {
+  window.location.href = "/api/google/start";
+}
 
   const addModalTitle =
     addModalType === "grocery"
@@ -1907,7 +1842,9 @@ if (!session && !bypassAuth) {
 </div>
               <div className="rounded-2xl bg-emerald-50 px-3 py-2 text-emerald-700 shadow-sm ring-1 ring-emerald-100">Sync ✓</div>
               <button
-                onClick={connectGoogleCalendar}
+  onClick={() => {
+    window.location.href = "/api/google/start";
+  }}
                 className={[
                   "rounded-2xl px-3 py-2 font-medium transition shadow-sm ring-1 ring-black/5",
                   googleCalendarConnected
@@ -1915,7 +1852,11 @@ if (!session && !bypassAuth) {
                     : "bg-white text-neutral-700 hover:bg-neutral-50",
                 ].join(" ")}
               >
-                {googleCalendarConnected ? "Google Calendar Connected" : "Connect Google Calendar"}
+                {!googleCalendarStatusLoaded
+  ? "Checking Calendar..."
+  : googleCalendarConnected
+    ? "Google Calendar Connected"
+    : "Connect Google Calendar"}
               </button>
             </div>
           </div>
